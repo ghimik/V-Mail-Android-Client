@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">V-Mail</string>
+    <string name="buttonText">hello</string>
 </resources>
