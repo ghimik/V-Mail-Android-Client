@@ -18,7 +18,6 @@ class SignupActivity : AppCompatActivity() {
     private lateinit var usernameEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var emailEditText: EditText
-    private lateinit var roleEditText: EditText
     private lateinit var signupButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +27,6 @@ class SignupActivity : AppCompatActivity() {
         usernameEditText = findViewById(R.id.usernameEditText)
         passwordEditText = findViewById(R.id.passwordEditText)
         emailEditText = findViewById(R.id.emailEditText)
-        roleEditText = findViewById(R.id.roleEditText)
         signupButton = findViewById(R.id.signupButton)
 
         signupButton.setOnClickListener {
@@ -40,9 +38,8 @@ class SignupActivity : AppCompatActivity() {
         val username = usernameEditText.text.toString()
         val password = passwordEditText.text.toString()
         val email = emailEditText.text.toString()
-        val role = roleEditText.text.toString()
 
-        val requestDto = SignUpRequestDto(username, password, email, role)
+        val requestDto = SignUpRequestDto(username, password, email)
 
         ApiClient.authApi.signup(requestDto).enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
