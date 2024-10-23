@@ -18,6 +18,7 @@ set(SOURCE_FILES
         mail_lib/src/pop3.c
         mail_lib/src/smtp.c
         mail_lib/src/java_pop3.c
+        mail_lib/src/java_smtp.c
 )
 
 # Creates and names a library, sets it as either STATIC
