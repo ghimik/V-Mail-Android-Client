@@ -9,12 +9,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.v_mail.ui.LoginActivity;
 import com.example.v_mail.ui.SignupActivity;
 
+import com.example.v_mail.api.ApiClient;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ApiClient.init(this);
 
         Button loginButton = findViewById(R.id.loginButton);
         Button signupButton = findViewById(R.id.signupButton);
@@ -36,5 +40,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+
     }
 }

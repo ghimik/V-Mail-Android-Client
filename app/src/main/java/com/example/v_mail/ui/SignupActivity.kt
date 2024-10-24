@@ -41,7 +41,7 @@ class SignupActivity : AppCompatActivity() {
 
         val requestDto = SignUpRequestDto(username, password, email)
 
-        ApiClient.authApi.signup(requestDto).enqueue(object : Callback<Void> {
+        ApiClient.getAuthApi().signup(requestDto).enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if (response.isSuccessful) {
                     Toast.makeText(this@SignupActivity, "Signed up successfully!", Toast.LENGTH_SHORT).show()

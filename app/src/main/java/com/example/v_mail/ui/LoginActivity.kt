@@ -12,6 +12,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import com.example.v_mail.R
+import android.content.Context
 
 class LoginActivity : AppCompatActivity() {
 
@@ -28,28 +29,35 @@ class LoginActivity : AppCompatActivity() {
         loginButton = findViewById(R.id.login_button)
 
         loginButton.setOnClickListener {
-            login()
+            login(this)
         }
+
     }
 
-    private fun login() {
+    private fun saveToken(token: String) {
+        val sharedPreferences = getSharedPreferences("vmail_prefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putString("auth_token", token)
+        editor.apply()
+    }
+
+    private fun login(context: Context) {
         val username = usernameEditText.text.toString()
         val password = passwordEditText.text.toString()
 
         val requestDto = AuthorizationRequestDto(username, password)
 
-        ApiClient.authApi.login(requestDto).enqueue(object : Callback<AuthorizationResponse> {
+        ApiClient.getAuthApi().login(requestDto).enqueue(object : Callback<AuthorizationResponse> {
             override fun onResponse(
                 call: Call<AuthorizationResponse>,
                 response: Response<AuthorizationResponse>
             ) {
                 if (response.isSuccessful) {
                     val authResponse = response.body()
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Logged in successfully!",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    authResponse?.let {
+                        saveToken(it.headerValue)
+                        Toast.makeText(this@LoginActivity, "Logged in successfully!", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
                     Toast.makeText(this@LoginActivity, "Login failed!",
                         Toast.LENGTH_SHORT).show()
