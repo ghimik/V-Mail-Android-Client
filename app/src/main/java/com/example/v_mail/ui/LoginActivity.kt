@@ -34,6 +34,15 @@ class LoginActivity : AppCompatActivity() {
 
     }
 
+    private fun saveUserData(username: String, password: String) {
+        val sharedPreferences = getSharedPreferences("vmail_prefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putString("username", username)
+        editor.putString("password", password)
+        editor.apply()
+    }
+
+
     private fun saveToken(token: String) {
         val sharedPreferences = getSharedPreferences("vmail_prefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
@@ -57,6 +66,7 @@ class LoginActivity : AppCompatActivity() {
                     authResponse?.let {
                         saveToken(it.headerValue)
                         Toast.makeText(this@LoginActivity, "Logged in successfully!", Toast.LENGTH_SHORT).show()
+                        saveUserData(username, password)
                     }
                 } else {
                     Toast.makeText(this@LoginActivity, "Login failed!",
