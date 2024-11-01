@@ -13,6 +13,8 @@ import retrofit2.Callback
 import retrofit2.Response
 import com.example.v_mail.R
 import android.content.Context
+import android.content.Intent
+import com.example.v_mail.MainActivity
 
 class LoginActivity : AppCompatActivity() {
 
@@ -49,7 +51,6 @@ class LoginActivity : AppCompatActivity() {
         editor.putString("auth_token", token)
         editor.apply()
     }
-
     private fun login(context: Context) {
         val username = usernameEditText.text.toString()
         val password = passwordEditText.text.toString()
@@ -66,11 +67,15 @@ class LoginActivity : AppCompatActivity() {
                     authResponse?.let {
                         saveToken(it.headerValue)
                         Toast.makeText(this@LoginActivity, "Logged in successfully!", Toast.LENGTH_SHORT).show()
+
+                        val intent = Intent(this@LoginActivity, MailActivity::class.java)
+                        startActivity(intent)
+                        finish()
+
                         saveUserData(username, password)
                     }
                 } else {
-                    Toast.makeText(this@LoginActivity, "Login failed!",
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@LoginActivity, "Login failed!", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -83,4 +88,9 @@ class LoginActivity : AppCompatActivity() {
             }
         })
     }
+
+
 }
+
+
+

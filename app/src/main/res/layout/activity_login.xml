@@ -12,8 +12,8 @@
         android:id="@+id/email_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Введите email"
-        android:inputType="textEmailAddress"
+        android:hint="Введите username"
+        android:inputType="text"
         android:layout_marginTop="32dp" />
 
     <EditText

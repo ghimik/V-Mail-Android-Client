@@ -7,6 +7,7 @@ import com.example.v_mail.dto.request.TokenRequest;
 import com.example.v_mail.dto.response.AuthenticationResponse;
 
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.Call;
@@ -14,7 +15,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ApiClient {
-    private static final String BASE_URL = "http://localhost:8081/api/auth/";
+    private static final String BASE_URL = "http://povt-cluster.tstu.tver.ru:44577/api/auth/";
     private static Retrofit retrofit;
     private static SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "vMailPrefs";
@@ -25,6 +26,7 @@ public class ApiClient {
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
                 .addInterceptor(new AuthInterceptor(context))
                 .build();
 
@@ -63,8 +65,12 @@ public class ApiClient {
             public void onResponse(Call<AuthenticationResponse> call, Response<AuthenticationResponse> response) {
                 if (response.isSuccessful()) {
                     AuthenticationResponse newAuthResponse = response.body();
-                    saveTokens(newAuthResponse.getToken(), newAuthResponse.getRefreshToken());
-                    callback.onResponse(call, response);
+                    if (newAuthResponse != null) {
+                        saveTokens(newAuthResponse.getToken(), newAuthResponse.getRefreshToken());
+                        callback.onResponse(call, response);
+                    } else {
+                        callback.onFailure(call, new Throwable("Empty response body"));
+                    }
                 } else {
                     callback.onFailure(call, new Throwable("Failed to refresh token"));
                 }
