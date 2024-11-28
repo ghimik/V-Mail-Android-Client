@@ -1,66 +1,74 @@
-//
-// Created by Алексей on 23.10.2024.
-//
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
+#include <stdint.h>
 #include "smtp.h"
-#include <jni.h>
 
-JNIEXPORT jlong
-Java_com_example_v_1mail_smtp_SmtpClient_nativeInit(JNIEnv *env, jobject obj, jstring server_ip, jint port) {
-    const char *nativeServerIp = (*env)->GetStringUTFChars(env, server_ip, 0);
-
-    SmtpClient *client = (SmtpClient *)malloc(sizeof(SmtpClient));
-    if (smtp_client_init(client, nativeServerIp, port) != 0) {
-        (*env)->ReleaseStringUTFChars(env, server_ip, nativeServerIp);
-        free(client);
-        return (jlong)0;
+// JNI метод для инициализации SMTP клиента
+JNIEXPORT jlong JNICALL
+Java_com_example_v_1mail_mail_SmtpClient_nativeCreate(JNIEnv *env, jobject obj) {
+    SmtpClient *client = createSmtpClient();
+    if (!client) {
+        fprintf(stderr, "Failed to create SmtpClient\n");
+        return 0; // Вернем NULL указатель в Java
     }
-
-    (*env)->ReleaseStringUTFChars(env, server_ip, nativeServerIp);
     return (jlong)(uintptr_t)client;
 }
 
-JNIEXPORT jint
-Java_com_example_v_1mail_smtp_SmtpClient_nativeConnect(JNIEnv *env, jobject obj, jlong clientPtr) {
+// JNI метод для подключения к серверу SMTP
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_SmtpClient_nativeConnect(JNIEnv *env, jobject obj, jlong clientPtr) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
-    return smtp_client_connect(client);
+    return connectToSmtpServer(client);
 }
 
-JNIEXPORT jint
-Java_com_example_v_1mail_smtp_SmtpClient_nativeSendEmail(JNIEnv *env, jobject obj, jlong clientPtr, jstring from, jstring to, jstring subject, jstring body) {
+// JNI метод для авторизации на сервере SMTP
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_SmtpClient_nativeAuthenticate(JNIEnv *env, jobject obj, jlong clientPtr, jstring username, jstring password) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
 
-    const char *nativeFrom = (*env)->GetStringUTFChars(env, from, 0);
-    const char *nativeTo = (*env)->GetStringUTFChars(env, to, 0);
+    const char *nativeUsername = (*env)->GetStringUTFChars(env, username, 0);
+    const char *nativePassword = (*env)->GetStringUTFChars(env, password, 0);
+
+    int result = authenticateSmtp(client, nativeUsername, nativePassword);
+
+    (*env)->ReleaseStringUTFChars(env, username, nativeUsername);
+    (*env)->ReleaseStringUTFChars(env, password, nativePassword);
+
+    return result;
+}
+
+// JNI метод для отправки письма через SMTP
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_SmtpClient_nativeSendEmail(JNIEnv *env, jobject obj, jlong clientPtr, jstring sender, jstring recipient, jstring subject, jstring body) {
+    SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
+
+    const char *nativeSender = (*env)->GetStringUTFChars(env, sender, 0);
+    const char *nativeRecipient = (*env)->GetStringUTFChars(env, recipient, 0);
     const char *nativeSubject = (*env)->GetStringUTFChars(env, subject, 0);
     const char *nativeBody = (*env)->GetStringUTFChars(env, body, 0);
 
-    int result = smtp_client_send_email(client, nativeFrom, nativeTo, nativeSubject, nativeBody);
+    int result = sendEmail(client, nativeSender, nativeRecipient, nativeSubject, nativeBody);
 
-    (*env)->ReleaseStringUTFChars(env, from, nativeFrom);
-    (*env)->ReleaseStringUTFChars(env, to, nativeTo);
+    (*env)->ReleaseStringUTFChars(env, sender, nativeSender);
+    (*env)->ReleaseStringUTFChars(env, recipient, nativeRecipient);
     (*env)->ReleaseStringUTFChars(env, subject, nativeSubject);
     (*env)->ReleaseStringUTFChars(env, body, nativeBody);
 
     return result;
 }
 
-JNIEXPORT void JNICALL
-Java_com_example_v_1mail_smtp_SmtpClient_nativeDisconnect(JNIEnv *env, jobject obj, jlong clientPtr) {
+// JNI метод для завершения соединения SMTP
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_SmtpClient_nativeClose(JNIEnv *env, jobject obj, jlong clientPtr) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
-    smtp_client_quit(client);
-    close(client->sockfd);
+    return closeSmtpConnection(client);
 }
 
+// JNI метод для уничтожения SMTP клиента
 JNIEXPORT void JNICALL
-Java_com_example_v_1mail_smtp_SmtpClient_nativeFree(JNIEnv *env, jobject obj, jlong clientPtr) {
+Java_com_example_v_1mail_mail_SmtpClient_nativeDestroy(JNIEnv *env, jobject obj, jlong clientPtr) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
-    smtp_client_free(client);
-    free(client);
+    destroySmtpClient(&client);
 }
 

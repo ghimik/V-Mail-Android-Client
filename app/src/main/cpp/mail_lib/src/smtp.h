@@ -1,39 +1,35 @@
-//
-// Created by Алексей on 08.10.2024.
-//
+#ifndef SMTP_H
+#define SMTP_H
 
-#ifndef V_MAIL_SMTP_H
-#define V_MAIL_SMTP_H
+#include <stddef.h>
 
-typedef struct {
-    int sockfd;
-    char *server;
-    int port;
+// Структура клиента SMTP
+typedef struct SmtpClient {
+    int sock; // Сокет соединения
 } SmtpClient;
 
-int smtp_client_init(SmtpClient *client, const char *server, int port);
+// Создание клиента SMTP
+SmtpClient* createSmtpClient(void);
 
-int smtp_client_connect(SmtpClient *client);
+// Уничтожение клиента SMTP
+void destroySmtpClient(SmtpClient** client);
 
-void smtp_client_send_command(int sockfd, const char *command);
+// Подключение к серверу SMTP
+int connectToSmtpServer(SmtpClient* client);
 
-char* smtp_client_receive_response(int sockfd);
+// Авторизация на сервере SMTP
+int authenticateSmtp(SmtpClient* client, const char* username, const char* password);
 
-int smtp_client_check_response(const char *response);
+// Отправка письма через SMTP
+int sendEmail(
+        SmtpClient* client,
+        const char* sender,
+        const char* recipient,
+        const char* subject,
+        const char* body
+);
 
-int smtp_client_helo(SmtpClient *client);
+// Завершение соединения SMTP
+int closeSmtpConnection(SmtpClient* client);
 
-int smtp_client_mail_from(SmtpClient *client, const char *from);
-
-int smtp_client_rcpt_to(SmtpClient *client, const char *to);
-
-int smtp_client_data(SmtpClient *client);
-
-int smtp_client_send_message(SmtpClient *client, const char *subject, const char *body);
-
-int smtp_client_quit(SmtpClient *client);
-
-int smtp_client_send_email(SmtpClient *client, const char *from, const char *to, const char *subject, const char *body);
-
-void smtp_client_free(SmtpClient *client);
-#endif //V_MAIL_SMTP_H
+#endif // SMTP_H

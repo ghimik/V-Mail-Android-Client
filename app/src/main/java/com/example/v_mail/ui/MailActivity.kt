@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.v_mail.R
-import com.example.v_mail.pop.MailService
+import com.example.v_mail.mail.MailService
 
 class MailActivity : AppCompatActivity() {
 

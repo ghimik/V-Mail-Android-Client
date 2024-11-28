@@ -1,149 +1,113 @@
-//
-// Created by Алексей on 08.10.2024.
-//
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
 #include "smtp.h"
 
+#define SMTP_SERVER "82.179.140.18"
+#define SMTP_PORT 25
 
-int smtp_client_init(SmtpClient *client, const char *server, int port) {
-    client->server = strdup(server);
-    if (!client->server) return -1;
-    client->port = port;
-    return 0;
-}
-
-int smtp_client_connect(SmtpClient *client) {
-    struct sockaddr_in server_addr;
-
-    client->sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (client->sockfd < 0) {
-        return -1;
-    }
-
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(client->port);
-
-    if (inet_pton(AF_INET, client->server, &server_addr.sin_addr) <= 0) {
-        return -1;
-    }
-
-    if (connect(client->sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
-void smtp_client_send_command(int sockfd, const char *command) {
-    send(sockfd, command, strlen(command), 0);
-}
-
-char* smtp_client_receive_response(int sockfd) {
-    char *response = malloc(1024);
-    if (!response) return NULL;
-
-    int len = recv(sockfd, response, 1023, 0);
-    if (len < 0) {
-        free(response);
+SmtpClient* createSmtpClient(void) {
+    SmtpClient* client = malloc(sizeof(SmtpClient));
+    if (!client) {
+        perror("Allocation failed");
         return NULL;
     }
 
-    response[len] = '\0'; // Завершаем строку
-    return response;
+    client->sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (client->sock < 0) {
+        perror("Creating socket error");
+        free(client);
+        return NULL;
+    }
+
+    return client;
 }
 
-int smtp_client_check_response(const char *response) {
-    return response[0] == '2';
+void destroySmtpClient(SmtpClient** client) {
+    if (*client) {
+        close((*client)->sock);
+        free(*client);
+        *client = NULL;
+    }
 }
 
-int smtp_client_helo(SmtpClient *client) {
-    smtp_client_send_command(client->sockfd, "HELO localhost\r\n");
-    char *response = smtp_client_receive_response(client->sockfd);
+int connectToSmtpServer(SmtpClient* client) {
+    struct hostent* d_addr = gethostbyname(SMTP_SERVER);
+    if (d_addr == NULL) {
+        perror("Getting host error");
+        return -1;
+    }
 
-    int success = smtp_client_check_response(response);
-    free(response);
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = *((unsigned long*)d_addr->h_addr);
+    addr.sin_port = htons(SMTP_PORT);
 
-    return success ? 0 : -1;
-}
+    if (connect(client->sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("Connecting error");
+        return -1;
+    }
 
-int smtp_client_mail_from(SmtpClient *client, const char *from) {
-    char command[1024];
-    snprintf(command, sizeof(command), "MAIL FROM:<%s>\r\n", from);
-    smtp_client_send_command(client->sockfd, command);
-
-    char *response = smtp_client_receive_response(client->sockfd);
-
-    int success = smtp_client_check_response(response);
-    free(response);
-
-    return success ? 0 : -1;
-}
-
-int smtp_client_rcpt_to(SmtpClient *client, const char *to) {
-    char command[1024];
-    snprintf(command, sizeof(command), "RCPT TO:<%s>\r\n", to);
-    smtp_client_send_command(client->sockfd, command);
-
-    char *response = smtp_client_receive_response(client->sockfd);
-
-    int success = smtp_client_check_response(response);
-    free(response);
-
-    return success ? 0 : -1;
-}
-
-int smtp_client_data(SmtpClient *client) {
-    smtp_client_send_command(client->sockfd, "DATA\r\n");
-
-    char *response = smtp_client_receive_response(client->sockfd);
-
-    int success = smtp_client_check_response(response);
-    free(response);
-
-    return success ? 0 : -1;
-}
-
-int smtp_client_send_message(SmtpClient *client, const char *subject, const char *body) {
-    char command[1024];
-    snprintf(command, sizeof(command), "Subject: %s\r\n\r\n%s\r\n.\r\n", subject, body);
-
-    smtp_client_send_command(client->sockfd, command);
-
-    char *response = smtp_client_receive_response(client->sockfd);
-
-    int success = smtp_client_check_response(response);
-    free(response);
-
-    return success ? 0 : -1;
-}
-
-int smtp_client_quit(SmtpClient *client) {
-    smtp_client_send_command(client->sockfd, "QUIT\r\n");
-
-    char *response = smtp_client_receive_response(client->sockfd);
-
-    int success = smtp_client_check_response(response);
-    free(response);
-    return success ? 0 : -1;
-}
-
-int smtp_client_send_email(SmtpClient *client, const char *from, const char *to, const char *subject, const char *body) {
-    if (smtp_client_helo(client) != 0) return -1;
-    if (smtp_client_mail_from(client, from) != 0) return -1;
-    if (smtp_client_rcpt_to(client, to) != 0) return -1;
-    if (smtp_client_data(client) != 0) return -1;
-    if (smtp_client_send_message(client, subject, body) != 0) return -1;
-    if (smtp_client_quit(client) != 0) return -1;
-
-    close(client->sockfd);
+    char buf[1024];
+    recv(client->sock, buf, sizeof(buf), 0);
+    printf("Connected to server: %s\n", buf);
     return 0;
 }
 
-void smtp_client_free(SmtpClient *client) {
-    free(client->server);
+int authenticateSmtp(SmtpClient* client, const char* username, const char* password) {
+    char buf[1024];
+    const char* commands[] = {
+            "EHLO localhost\r\n",
+            "AUTH LOGIN\r\n",
+            username,
+            password,
+            NULL
+    };
+
+    for (int i = 0; commands[i] != NULL; i++) {
+        send(client->sock, commands[i], strlen(commands[i]), 0);
+        printf("Sent: %s", commands[i]);
+
+        recv(client->sock, buf, sizeof(buf), 0);
+        printf("Received: %s\n", buf);
+    }
+
+    return 0; // Authentication successful
+}
+
+int sendEmail(SmtpClient* client, const char* sender, const char* receiver, const char* subject, const char* body) {
+    char buf[1024];
+    char command[512];
+
+    snprintf(command, sizeof(command), "MAIL FROM: <%s>\r\n", sender);
+    send(client->sock, command, strlen(command), 0);
+    recv(client->sock, buf, sizeof(buf), 0);
+    printf("Sent: %sReceived: %s\n", command, buf);
+
+    snprintf(command, sizeof(command), "RCPT TO: <%s>\r\n", receiver);
+    send(client->sock, command, strlen(command), 0);
+    recv(client->sock, buf, sizeof(buf), 0);
+    printf("Sent: %sReceived: %s\n", command, buf);
+
+    send(client->sock, "DATA\r\n", strlen("DATA\r\n"), 0);
+    recv(client->sock, buf, sizeof(buf), 0);
+    printf("Sent: DATA\nReceived: %s\n", buf);
+
+    snprintf(command, sizeof(command),
+             "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s\r\n.\r\n",
+             sender, receiver, subject, body);
+    send(client->sock, command, strlen(command), 0);
+    recv(client->sock, buf, sizeof(buf), 0);
+    printf("Sent: Email content\nReceived: %s\n", buf);
+
+    return 0;
+}
+
+int closeSmtpConnection(SmtpClient* client) {
+    return send(client->sock, "QUIT\r\n", strlen("QUIT\r\n"), 0);
 }

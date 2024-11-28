@@ -1,55 +1,88 @@
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
+#include <stdint.h>
 #include "pop.h"
 
-JNIEXPORT jlong
-Java_com_example_v_1mail_pop_Pop3Client_nativeInit(JNIEnv *env, jobject obj, jstring server_ip, jstring username, jstring password) {
-    const char *nativeServerIp = (*env)->GetStringUTFChars(env, server_ip, 0);
-    const char *nativeUsername = (*env)->GetStringUTFChars(env, username, 0);
-    const char *nativePassword = (*env)->GetStringUTFChars(env, password, 0);
-
-    Pop3Client *client = pop3_client_init(nativeServerIp, nativeUsername, nativePassword);
-
-    (*env)->ReleaseStringUTFChars(env, server_ip, nativeServerIp);
-    (*env)->ReleaseStringUTFChars(env, username, nativeUsername);
-    (*env)->ReleaseStringUTFChars(env, password, nativePassword);
-
+// JNI метод для инициализации POP3 клиента
+JNIEXPORT jlong JNICALL
+Java_com_example_v_1mail_mail_Pop3Client_nativeCreate(JNIEnv *env, jobject obj) {
+    Pop3Client *client = createPop3Client();
+    if (!client) {
+        fprintf(stderr, "Failed to create Pop3Client\n");
+        return 0; // Вернем NULL указатель в Java
+    }
     return (jlong)(uintptr_t)client;
 }
 
-JNIEXPORT void JNICALL
-Java_com_example_v_1mail_pop_Pop3Client_nativeConnect(JNIEnv *env, jobject obj, jlong clientPtr, jint port) {
+// JNI метод для подключения к серверу POP3
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_Pop3Client_nativeConnect(JNIEnv *env, jobject obj, jlong clientPtr, jstring server, jint port) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
-    pop3_client_connect(client, port);
-}
+    const char *nativeServer = (*env)->GetStringUTFChars(env, server, 0);
 
-JNIEXPORT jobjectArray
-Java_com_example_v_1mail_pop_Pop3Client_nativeList(JNIEnv *env, jobject obj, jlong clientPtr) {
-    Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
-    int message_count = 0;
-    char **messages = pop3_client_list(client, &message_count);
+    int result = connectToPop3Server(client, nativeServer, (int)port);
 
-    jobjectArray result = (*env)->NewObjectArray(env, message_count, (*env)->FindClass(env, "java/lang/String"), NULL);
-    for (int i = 0; i < message_count; i++) {
-        (*env)->SetObjectArrayElement(env, result, i, (*env)->NewStringUTF(env, messages[i]));
-        free(messages[i]);
-    }
-    free(messages);
+    (*env)->ReleaseStringUTFChars(env, server, nativeServer);
     return result;
 }
 
-JNIEXPORT void JNICALL
-Java_com_example_v_1mail_pop_Pop3Client_nativeDisconnect(JNIEnv *env, jobject obj, jlong clientPtr) {
+// JNI метод для авторизации на сервере POP3
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_Pop3Client_nativeAuthenticate(JNIEnv *env, jobject obj, jlong clientPtr, jstring username, jstring password) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
-    pop3_client_disconnect(client);
+
+    const char *nativeUsername = (*env)->GetStringUTFChars(env, username, 0);
+    const char *nativePassword = (*env)->GetStringUTFChars(env, password, 0);
+
+    int result = authenticatePop3(client, nativeUsername, nativePassword);
+
+    (*env)->ReleaseStringUTFChars(env, username, nativeUsername);
+    (*env)->ReleaseStringUTFChars(env, password, nativePassword);
+
+    return result;
 }
 
-JNIEXPORT void JNICALL
-Java_com_example_v_1mail_pop_Pop3Client_nativeFree(JNIEnv *env, jobject obj, jlong clientPtr) {
+// JNI метод для получения письма по индексу
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_Pop3Client_nativeRetrieveEmail(JNIEnv *env, jobject obj, jlong clientPtr, jint emailIndex) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
-    pop3_client_free(client);
+    return retrieveEmail(client, (int)emailIndex);
+}
+
+// JNI метод для завершения работы с сервером
+JNIEXPORT jint JNICALL
+Java_com_example_v_1mail_mail_Pop3Client_nativeQuit(JNIEnv *env, jobject obj, jlong clientPtr) {
+    Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
+    return quitPop3Server(client);
+}
+
+// JNI метод для уничтожения POP3 клиента
+JNIEXPORT void JNICALL
+Java_com_example_v_1mail_mail_Pop3Client_nativeDestroy(JNIEnv *env, jobject obj, jlong clientPtr) {
+    Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
+    destroyPop3Client(&client);
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_example_v_1mail_mail_Pop3Client_nativeListEmails(JNIEnv *env, jobject obj, jlong clientPtr) {
+    Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
+
+    int emailCount = 0;
+    char **emailList = listEmails(client, &emailCount);
+    if (!emailList) {
+        return NULL;
+    }
+
+    jclass stringClass = (*env)->FindClass(env, "java/lang/String");
+    jobjectArray result = (*env)->NewObjectArray(env, emailCount, stringClass, NULL);
+
+    for (int i = 0; i < emailCount; i++) {
+        jstring email = (*env)->NewStringUTF(env, emailList[i]);
+        (*env)->SetObjectArrayElement(env, result, i, email);
+        free(emailList[i]); // Освобождаем память
+    }
+    free(emailList); // Освобождаем массив указателей
+
+    return result;
 }
