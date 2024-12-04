@@ -63,15 +63,12 @@ int authenticatePop3(Pop3Client* client, const char* username, const char* passw
     snprintf(buf, sizeof(buf), "USER %s\r\n", username);
     send(client->sock, buf, strlen(buf), 0);
     recv(client->sock, buf, sizeof(buf), 0);
-    printf("Received: %s\n", buf);
 
     snprintf(buf, sizeof(buf), "PASS %s\r\n", password);
     send(client->sock, buf, strlen(buf), 0);
     recv(client->sock, buf, sizeof(buf), 0);
-    printf("Received: %s\n", buf);
 
     if (strstr(buf, "-ERR")) {
-        fprintf(stderr, "Authentication failed\n");
         return -1;
     }
 
@@ -85,7 +82,6 @@ int retrieveEmail(Pop3Client* client, int emailIndex) {
 
     printf("Message content:\n");
     while (recv(client->sock, buf, sizeof(buf), 0) > 0) {
-        printf("%s", buf);
         if (strstr(buf, "\r\n.\r\n")) break;  // End of message
     }
 
@@ -110,7 +106,6 @@ char** listEmails(Pop3Client* client, int* emailCount) {
     char response[1024];
     recv(client->sock, response, sizeof(response), 0);
     if (strstr(response, "-ERR")) {
-        fprintf(stderr, "LIST command failed: %s\n", response);
         return NULL;
     }
 

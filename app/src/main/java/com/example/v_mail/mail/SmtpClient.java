@@ -49,7 +49,6 @@ public class SmtpClient {
         }
     }
 
-    // JNI native methods
     private native long nativeCreate();
     private native int nativeConnect(long clientPtr);
     private native int nativeAuthenticate(long clientPtr, String username, String password);

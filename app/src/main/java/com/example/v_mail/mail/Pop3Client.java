@@ -59,7 +59,6 @@ public class Pop3Client {
 
 
 
-    // JNI native methods
     private native long nativeCreate();
     private native int nativeConnect(long clientPtr, String server, int port);
     private native int nativeAuthenticate(long clientPtr, String username, String password);

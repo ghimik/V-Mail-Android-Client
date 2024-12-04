@@ -14,7 +14,6 @@ import retrofit2.Response
 import com.example.v_mail.R
 import android.content.Context
 import android.content.Intent
-import com.example.v_mail.MainActivity
 
 class LoginActivity : AppCompatActivity() {
 
@@ -33,17 +32,16 @@ class LoginActivity : AppCompatActivity() {
         loginButton.setOnClickListener {
             login(this)
         }
-
     }
 
-    private fun saveUserData(username: String, password: String) {
+    private fun saveUserData(username: String, password: String, email: String) {
         val sharedPreferences = getSharedPreferences("vmail_prefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
         editor.putString("username", username)
         editor.putString("password", password)
+        editor.putString("email", email)
         editor.apply()
     }
-
 
     private fun saveToken(token: String) {
         val sharedPreferences = getSharedPreferences("vmail_prefs", Context.MODE_PRIVATE)
@@ -51,6 +49,7 @@ class LoginActivity : AppCompatActivity() {
         editor.putString("auth_token", token)
         editor.apply()
     }
+
     private fun login(context: Context) {
         val username = usernameEditText.text.toString()
         val password = passwordEditText.text.toString()
@@ -66,13 +65,12 @@ class LoginActivity : AppCompatActivity() {
                     val authResponse = response.body()
                     authResponse?.let {
                         saveToken(it.headerValue)
+                        saveUserData(username=username, password=password, email=it.email)
                         Toast.makeText(this@LoginActivity, "Logged in successfully!", Toast.LENGTH_SHORT).show()
 
                         val intent = Intent(this@LoginActivity, MailActivity::class.java)
                         startActivity(intent)
                         finish()
-
-                        saveUserData(username, password)
                     }
                 } else {
                     Toast.makeText(this@LoginActivity, "Login failed!", Toast.LENGTH_SHORT).show()
@@ -88,9 +86,4 @@ class LoginActivity : AppCompatActivity() {
             }
         })
     }
-
-
 }
-
-
-

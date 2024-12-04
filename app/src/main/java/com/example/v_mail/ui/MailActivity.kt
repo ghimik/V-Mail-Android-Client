@@ -1,79 +1,141 @@
 package com.example.v_mail.ui
 
+import android.content.Context
 import android.os.Bundle
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.v_mail.R
-import com.example.v_mail.mail.MailService
+import com.example.v_mail.java_mail.Email
+import com.example.v_mail.java_mail.MailService
+import kotlinx.coroutines.*
+import java.io.IOException
 
 class MailActivity : AppCompatActivity() {
 
-    private lateinit var mailListView: ListView
-    private lateinit var emailTo: EditText
-    private lateinit var emailSubject: EditText
-    private lateinit var emailBody: EditText
-    private lateinit var sendButton: Button
-
     private lateinit var mailService: MailService
+    private lateinit var username: String
+    private lateinit var password: String
+    private lateinit var emailFrom: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mail)
 
-        mailListView = findViewById(R.id.mailListView)
-        emailTo = findViewById(R.id.emailTo)
-        emailSubject = findViewById(R.id.emailSubject)
-        emailBody = findViewById(R.id.emailBody)
-        sendButton = findViewById(R.id.sendButton)
+        // Загружаем данные из SharedPreferences
+        loadUserData()
 
-        mailService = MailService.getInstance(this)
+        // Инициализация MailService с настройками сервера
+        mailService = MailService(
+            "82.179.140.18",
+            25,
+            "82.179.140.18",
+            110
+        )
 
-        loadMessages()
+        val mailListView = findViewById<ListView>(R.id.mailListView)
+        val emailTo = findViewById<EditText>(R.id.emailTo)
+        val emailSubject = findViewById<EditText>(R.id.emailSubject)
+        val emailBody = findViewById<EditText>(R.id.emailBody)
+        val sendButton = findViewById<Button>(R.id.sendButton)
 
+        // Загрузка списка входящих писем
+        loadInbox(mailListView)
+
+        // Отправка письма
         sendButton.setOnClickListener {
-            sendEmail()
-        }
-    }
+            val to = emailTo.text.toString()
+            val subject = emailSubject.text.toString()
+            val body = emailBody.text.toString()
 
-    private fun loadMessages() {
-        mailService.connectPop3(110)
-        val messages = mailService.listMessages()
-
-        if (messages != null) {
-            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, messages)
-            mailListView.adapter = adapter
-        } else {
-            Toast.makeText(this, "Failed to load messages", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun sendEmail() {
-        val to = emailTo.text.toString()
-        val subject = emailSubject.text.toString()
-        val body = emailBody.text.toString()
-        val username = getSharedPreferences("vmail_prefs", MODE_PRIVATE).getString("username", null)
-
-        if (to.isNotEmpty() && subject.isNotEmpty() && body.isNotEmpty() && username != null) {
-            if (mailService.connectSmtp()) {
-                val sent = mailService.sendEmail(username, to, subject, body)
-                if (sent) {
-                    Toast.makeText(this, "Email sent successfully!", Toast.LENGTH_SHORT).show()
-                    clearFields()
-                } else {
-                    Toast.makeText(this, "Failed to send email", Toast.LENGTH_SHORT).show()
-                }
-                mailService.disconnectSmtp()
+            if (to.isBlank() || subject.isBlank() || body.isBlank()) {
+                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "SMTP connection failed", Toast.LENGTH_SHORT).show()
+                sendEmail(to, subject, body)
             }
-        } else {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun clearFields() {
-        emailTo.text.clear()
-        emailSubject.text.clear()
-        emailBody.text.clear()
+    private fun loadUserData() {
+        val sharedPreferences = getSharedPreferences("vmail_prefs", Context.MODE_PRIVATE)
+        username = sharedPreferences.getString("username", "") ?: ""
+        password = sharedPreferences.getString("password", "") ?: ""
+        emailFrom = sharedPreferences.getString("email", "") ?: ""
+    }
+
+    private fun loadInbox(mailListView: ListView) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val emails = mailService.getInbox(username, password)
+                val emailSubjects = emails.map { email -> email.subject }
+
+                withContext(Dispatchers.Main) {
+                    val adapter = ArrayAdapter(
+                        this@MailActivity,
+                        android.R.layout.simple_list_item_1,
+                        emailSubjects
+                    )
+                    mailListView.adapter = adapter
+
+                    mailListView.setOnItemClickListener { _, _, position, _ ->
+                        val selectedEmail = emails[position]
+                        showEmailDetails(selectedEmail)
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@MailActivity,
+                        "Failed to load inbox: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun sendEmail(to: String, subject: String, body: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                mailService.sendEmail(
+                    emailFrom,
+                    to,
+                    subject,
+                    body,
+                    username,
+                    password
+                )
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MailActivity, "Email sent successfully!", Toast.LENGTH_SHORT).show()
+                    clearComposeFields()
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@MailActivity,
+                        "Failed to send email: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun clearComposeFields() {
+        findViewById<EditText>(R.id.emailTo).text.clear()
+        findViewById<EditText>(R.id.emailSubject).text.clear()
+        findViewById<EditText>(R.id.emailBody).text.clear()
+    }
+
+    private fun showEmailDetails(email: Email) {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(email.subject)
+            .setMessage("From: ${email.from}\n\n${email.body}")
+            .setPositiveButton("OK", null)
+            .create()
+        dialog.show()
     }
 }
