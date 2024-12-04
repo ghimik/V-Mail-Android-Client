@@ -13,20 +13,25 @@
         android:textSize="18sp"
         android:paddingBottom="8dp" />
 
-    <ListView
-        android:id="@+id/mailListView"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:dividerHeight="1dp" />
+        android:layout_height="337dp">
+
+        <ListView
+            android:id="@+id/mailListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:dividerHeight="1dp" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <TextView
         android:id="@+id/composeTitle"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="37dp"
+        android:paddingBottom="8dp"
         android:text="Compose a new email"
-        android:textSize="18sp"
-        android:paddingBottom="8dp" />
+        android:textSize="18sp" />
 
     <EditText
         android:id="@+id/emailTo"

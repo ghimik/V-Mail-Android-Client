@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.v_mail.R
 import com.example.v_mail.java_mail.Email
 import com.example.v_mail.java_mail.MailService
@@ -22,10 +23,8 @@ class MailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mail)
 
-        // Загружаем данные из SharedPreferences
         loadUserData()
 
-        // Инициализация MailService с настройками сервера
         mailService = MailService(
             "82.179.140.18",
             25,
@@ -38,11 +37,16 @@ class MailActivity : AppCompatActivity() {
         val emailSubject = findViewById<EditText>(R.id.emailSubject)
         val emailBody = findViewById<EditText>(R.id.emailBody)
         val sendButton = findViewById<Button>(R.id.sendButton)
+        val swipeRefreshLayout = findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
 
-        // Загрузка списка входящих писем
+
         loadInbox(mailListView)
 
-        // Отправка письма
+        swipeRefreshLayout.setOnRefreshListener {
+            loadInbox(mailListView)
+            swipeRefreshLayout.isRefreshing = false
+        }
+
         sendButton.setOnClickListener {
             val to = emailTo.text.toString()
             val subject = emailSubject.text.toString()
