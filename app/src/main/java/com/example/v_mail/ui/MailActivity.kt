@@ -135,11 +135,34 @@ class MailActivity : AppCompatActivity() {
     }
 
     private fun showEmailDetails(email: Email) {
-        val dialog = AlertDialog.Builder(this)
-            .setTitle(email.subject)
-            .setMessage("From: ${email.from}\n\n${email.body}")
+        val dialogView = layoutInflater.inflate(R.layout.dialog_email_details, null)
+
+        val fromTextView = dialogView.findViewById<TextView>(R.id.emailFrom)
+        val toTextView = dialogView.findViewById<TextView>(R.id.emailTo)
+        val bodyTextView = dialogView.findViewById<TextView>(R.id.emailBody)
+        val decodeButton = dialogView.findViewById<Button>(R.id.decodeButton)
+        val subjectView = dialogView.findViewById<TextView>(R.id.emailSubject)
+
+        fromTextView.text = "From: ${email.from}"
+        toTextView.text = "To: ${email.to}"
+        subjectView.text = "Subject: ${email.subject}"
+        bodyTextView.text = email.body
+
+        decodeButton.setOnClickListener {
+            try {
+                val decodedBody = String(android.util.Base64.decode(email.body, android.util.Base64.DEFAULT))
+                bodyTextView.text = decodedBody
+                Toast.makeText(this, "Decoded successfully", Toast.LENGTH_SHORT).show()
+            } catch (e: IllegalArgumentException) {
+                Toast.makeText(this, "Failed to decode: Not a valid Base64 string", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        AlertDialog.Builder(this)
+            .setView(dialogView)
             .setPositiveButton("OK", null)
             .create()
-        dialog.show()
+            .show()
     }
+
 }
