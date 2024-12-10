@@ -19,6 +19,13 @@ class MailActivity : AppCompatActivity() {
     private lateinit var password: String
     private lateinit var emailFrom: String
 
+    override fun onResume() {
+        super.onResume()
+
+        val mailListView = findViewById<ListView>(R.id.mailListView)
+        loadInbox(mailListView)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mail)
@@ -39,8 +46,6 @@ class MailActivity : AppCompatActivity() {
         val sendButton = findViewById<Button>(R.id.sendButton)
         val swipeRefreshLayout = findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
 
-
-        loadInbox(mailListView)
 
         swipeRefreshLayout.setOnRefreshListener {
             loadInbox(mailListView)

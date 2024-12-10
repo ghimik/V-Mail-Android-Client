@@ -7,11 +7,11 @@
       </SelectionState>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-10-02T19:02:38.804567Z">
+        <DropdownSelection timestamp="2024-12-04T16:59:34.391342Z">
           <Target type="DEFAULT_BOOT">
-            <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=25061JEGR00358" />
-            </handle>
+            <template>
+              <DeviceId pluginId="FirebaseDirectAccess" type="TEMPLATE" identifier="model_id=bluejay/32" />
+            </template>
           </Target>
         </DropdownSelection>
         <DialogSelection />

@@ -85,6 +85,8 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation (libs.androidx.work.runtime.ktx)
+
 
     implementation(libs.kotlinx.serialization.json)
 }
