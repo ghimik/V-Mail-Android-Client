@@ -145,7 +145,7 @@ class MailActivity : AppCompatActivity() {
         val fromTextView = dialogView.findViewById<TextView>(R.id.emailFrom)
         val toTextView = dialogView.findViewById<TextView>(R.id.emailTo)
         val bodyTextView = dialogView.findViewById<TextView>(R.id.emailBody)
-        val decodeButton = dialogView.findViewById<Button>(R.id.decodeButton)
+        // val decodeButton = dialogView.findViewById<Button>(R.id.decodeButton)
         val subjectView = dialogView.findViewById<TextView>(R.id.emailSubject)
 
         fromTextView.text = "From: ${email.from}"
@@ -153,7 +153,7 @@ class MailActivity : AppCompatActivity() {
         subjectView.text = "Subject: ${email.subject}"
         bodyTextView.text = email.body
 
-        decodeButton.setOnClickListener {
+        /* decodeButton.setOnClickListener {
             try {
                 val decodedBody = String(android.util.Base64.decode(email.body, android.util.Base64.DEFAULT))
                 bodyTextView.text = decodedBody
@@ -162,6 +162,8 @@ class MailActivity : AppCompatActivity() {
                 Toast.makeText(this, "Failed to decode: Not a valid Base64 string", Toast.LENGTH_SHORT).show()
             }
         }
+        */
+
 
         AlertDialog.Builder(this)
             .setView(dialogView)
