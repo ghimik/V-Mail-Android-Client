@@ -11,9 +11,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.example.v_mail.R;
-import com.example.v_mail.java_mail.MailService;
-import com.example.v_mail.java_mail.Email;
+import com.example.v_mail.mail.MailService;
+import com.example.v_mail.mail.Email;
 
 import java.util.List;
 

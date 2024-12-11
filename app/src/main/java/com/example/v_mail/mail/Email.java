@@ -1,4 +1,4 @@
-package com.example.v_mail.java_mail;
+package com.example.v_mail.mail;
 
 
 

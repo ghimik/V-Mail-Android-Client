@@ -15,10 +15,8 @@ project("v_mail")
 set(CMAKE_C_STANDARD 11)
 
 set(SOURCE_FILES
-        mail_lib/src/pop3.c
-        mail_lib/src/smtp.c
-        mail_lib/src/java_pop3.c
-        mail_lib/src/java_smtp.c
+        mail_lib/src/Pop3Client.c
+        mail_lib/src/SmtpClient.c
 )
 
 # Creates and names a library, sets it as either STATIC

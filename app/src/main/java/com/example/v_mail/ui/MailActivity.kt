@@ -7,8 +7,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.v_mail.R
-import com.example.v_mail.java_mail.Email
-import com.example.v_mail.java_mail.MailService
+import com.example.v_mail.mail.Email
+import com.example.v_mail.mail.MailService
 import kotlinx.coroutines.*
 import java.io.IOException
 

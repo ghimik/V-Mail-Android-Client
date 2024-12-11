@@ -1,19 +1,23 @@
-package com.example.v_mail.java_mail;
+package com.example.v_mail.mail;
 
 import android.os.Build;
+
+import com.example.v_mail.mail.java.Pop3ClientJava;
+import com.example.v_mail.mail.java.SmtpClientJava;
+import com.example.v_mail.mail.jni.Pop3ClientJNI;
+import com.example.v_mail.mail.jni.SmtpClientJNI;
 
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 
 public class MailService {
     private final SmtpClient smtpClient;
     private final Pop3Client pop3Client;
 
     public MailService(String smtpServer, int smtpPort, String pop3Server, int pop3Port) {
-        this.smtpClient = new SmtpClient(smtpServer, smtpPort);
-        this.pop3Client = new Pop3Client(pop3Server, pop3Port);
+        this.smtpClient = new SmtpClientJNI(smtpServer, smtpPort);
+        this.pop3Client = new Pop3ClientJNI(pop3Server, pop3Port);
     }
 
     private String encodeBase64(String input) {

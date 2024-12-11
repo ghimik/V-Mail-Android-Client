@@ -1,8 +1,11 @@
-package com.example.v_mail.java_mail;
+package com.example.v_mail.mail.java;
 
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
+
+import com.example.v_mail.mail.Email;
+import com.example.v_mail.mail.SmtpClient;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -12,16 +15,15 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 
-public class SmtpClient {
+public class SmtpClientJava implements SmtpClient {
     private final String smtpServer;
     private final int port;
     private Socket socket;
     private BufferedReader reader;
     private BufferedWriter writer;
 
-    public SmtpClient(String smtpServer, int port) {
+    public SmtpClientJava(String smtpServer, int port) {
         this.smtpServer = smtpServer;
         this.port = port;
     }

@@ -1,4 +1,7 @@
-package com.example.v_mail.java_mail;
+package com.example.v_mail.mail.java;
+
+import com.example.v_mail.mail.Email;
+import com.example.v_mail.mail.Pop3Client;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,14 +12,14 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Pop3Client {
+public class Pop3ClientJava implements Pop3Client {
     private final String pop3Server;
     private final int port;
     private Socket socket;
     private BufferedReader reader;
     private BufferedWriter writer;
 
-    public Pop3Client(String pop3Server, int port) {
+    public Pop3ClientJava(String pop3Server, int port) {
         this.pop3Server = pop3Server;
         this.port = port;
     }
