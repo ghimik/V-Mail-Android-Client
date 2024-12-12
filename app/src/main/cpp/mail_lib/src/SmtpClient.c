@@ -149,20 +149,15 @@ Java_com_example_v_1mail_mail_jni_SmtpClientJNI_sendEmailNative
     const char* c_body = (*env)->GetStringUTFChars(env, body, NULL);
     const char* c_date = (*env)->GetStringUTFChars(env, date, NULL);
 
-    // Отправляем команду MAIL FROM
     char mail_from[BUFFER_SIZE];
     snprintf(mail_from, BUFFER_SIZE, "MAIL FROM:<%s>", c_from);
     smtp_send_command(client, mail_from);
 
-    // Отправляем команду RCPT TO
     char rcpt_to[BUFFER_SIZE];
     snprintf(rcpt_to, BUFFER_SIZE, "RCPT TO:<%s>", c_to);
     smtp_send_command(client, rcpt_to);
 
-    // Отправляем команду DATA
     smtp_send_command(client, "DATA");
-
-    // Отправляем отдельные заголовки
 
     char from_command[BUFFER_SIZE];
     snprintf(from_command, BUFFER_SIZE, "From: %s", c_from);
@@ -181,12 +176,10 @@ Java_com_example_v_1mail_mail_jni_SmtpClientJNI_sendEmailNative
     smtp_send_command_no_response(client, date_command);
 
 
-    // Отправляем тело письма
     char body_command[BUFFER_SIZE];
     snprintf(body_command, BUFFER_SIZE, "\r\n%s", c_body);
     smtp_send_command_no_response(client, body_command);
 
-    // Завершаем отправку данных
     smtp_send_command(client, ".");
 
     LOGD(from_command);
@@ -198,7 +191,6 @@ Java_com_example_v_1mail_mail_jni_SmtpClientJNI_sendEmailNative
 
 
 
-    // Освобождаем память
     (*env)->ReleaseStringUTFChars(env, from, c_from);
     (*env)->ReleaseStringUTFChars(env, to, c_to);
     (*env)->ReleaseStringUTFChars(env, subject, c_subject);
