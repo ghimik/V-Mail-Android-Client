@@ -33,7 +33,9 @@ public class MailService {
             smtpClient.connect();
             smtpClient.authenticate(encodeBase64(username), encodeBase64(password));
             smtpClient.sendEmail(new Email(from, to, subject, body));
-            smtpClient.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
         finally {
             smtpClient.close();

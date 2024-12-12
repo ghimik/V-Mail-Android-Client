@@ -1,7 +1,12 @@
 package com.example.v_mail.mail.jni;
 
+import android.os.Build;
+
 import com.example.v_mail.mail.Email;
 import com.example.v_mail.mail.SmtpClient;
+
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class SmtpClientJNI implements SmtpClient {
     static {
@@ -31,7 +36,11 @@ public class SmtpClientJNI implements SmtpClient {
 
     @Override
     public void sendEmail(Email email) {
-        sendEmailNative(nativeClientPtr, email.getFrom(), email.getTo(), email.getSubject(), email.getBody());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            sendEmailNative(nativeClientPtr, email.getFrom(), email.getTo(), email.getSubject(), email.getBody(),
+                    DateTimeFormatter.RFC_1123_DATE_TIME
+                            .format(ZonedDateTime.now()));
+        }
     }
 
     @Override
@@ -43,7 +52,7 @@ public class SmtpClientJNI implements SmtpClient {
 
     private native void authenticateNative(long clientPtr, String username, String password);
 
-    private native void sendEmailNative(long clientPtr, String from, String to, String subject, String body);
+    private native void sendEmailNative(long clientPtr, String from, String to, String subject, String body, String date);
 
     private native void disconnectNative(long clientPtr);
 }

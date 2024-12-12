@@ -11,12 +11,12 @@
 
 #define BUFFER_SIZE 16384
 
-#define ENABLE_LOGGING 1
+#define ENABLE_LOGGING 0
 
 #if ENABLE_LOGGING
-    #define LOG_TAG "Pop3Client"
-    #define LOGD(msg) __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG, msg)
-    #define LOGE(msg) __android_log_write(ANDROID_LOG_ERROR, LOG_TAG, msg)
+#define LOG_TAG "Pop3Client"
+#define LOGD(msg) __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG, msg)
+#define LOGE(msg) __android_log_write(ANDROID_LOG_ERROR, LOG_TAG, msg)
 #else
 #define LOGD(msg) do {} while (0)
     #define LOGE(msg) do {} while (0)
@@ -26,7 +26,7 @@ typedef struct {
     int sockfd;
 } Pop3Client;
 
-// Connect
+// connect to the server
 Pop3Client *pop3_connect(const char *server, int port) {
     Pop3Client *client = malloc(sizeof(Pop3Client));
     struct sockaddr_in server_addr;
@@ -40,7 +40,8 @@ Pop3Client *pop3_connect(const char *server, int port) {
 
     char xx[255];
     sprintf(xx, "%d", client->sockfd);
-    LOGE(xx); // socket fd
+    LOGE(xx); // log socket fd
+
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     inet_pton(AF_INET, server, &server_addr.sin_addr);
@@ -52,15 +53,15 @@ Pop3Client *pop3_connect(const char *server, int port) {
     }
 
     char response[BUFFER_SIZE];
-    read(client->sockfd, response, BUFFER_SIZE);
+    read(client->sockfd, response, BUFFER_SIZE); // read server greeting
 
-    LOGD(response); // Log server response
-
+    LOGD(response); // log server response
     printf("POP3 Server: %s", response);
 
     return client;
 }
 
+// send command to POP3 server and read response
 int pop3_send_command(Pop3Client *client, const char *command, char *response) {
     write(client->sockfd, command, strlen(command));
     write(client->sockfd, "\r\n", 2);
@@ -71,15 +72,16 @@ int pop3_send_command(Pop3Client *client, const char *command, char *response) {
         return -1;
     }
 
-    response[bytes_read] = '\0';
+    response[bytes_read] = '\0'; // terminate string
 
     return 0;
 }
 
+// authenticate user with POP3 server
 int pop3_authenticate(Pop3Client *client, const char *username, const char *password) {
     char xx[255];
     sprintf(xx, "%d", client->sockfd);
-    LOGD(xx); // Log socket fd in auth
+    LOGD(xx); // log socket fd
 
     char response[BUFFER_SIZE];
 
@@ -100,16 +102,16 @@ int pop3_authenticate(Pop3Client *client, const char *username, const char *pass
     return 0;
 }
 
-// Disconnect
+// disconnect from server
 void pop3_disconnect(Pop3Client *client) {
     if (client) {
-        write(client->sockfd, "QUIT\r\n", 6);
-        close(client->sockfd);
-        free(client);
+        write(client->sockfd, "QUIT\r\n", 6); // send QUIT command
+        close(client->sockfd); // close socket
+        free(client); // free client memory
     }
 }
 
-// get emails
+// get inbox from the server
 JNIEXPORT jobjectArray JNICALL
 Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_getInboxNative
         (JNIEnv *env, jobject obj, jlong clientPtr) {
@@ -159,6 +161,7 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_getInboxNative
 }
 
 
+// retrieve an email from the server by index
 JNIEXPORT jstring JNICALL
 Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_retrNative
         (JNIEnv *env, jobject obj, jlong clientPtr, jint emailIndex) {
@@ -167,14 +170,14 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_retrNative
     char response[BUFFER_SIZE];
     int emailSize = 0;
 
-    // Отправляем команду RETR для получения письма по индексу
+    // send RETR command to get email by index
     snprintf(command, BUFFER_SIZE, "RETR %d\r\n", emailIndex);
     if (write(client->sockfd, command, strlen(command)) < 0) {
         LOGE("Failed to send RETR command");
         return (*env)->NewStringUTF(env, "Error sending RETR command");
     }
 
-    // Считываем первую строку посимвольно до новой строки
+    // read first line char by char until newline
     int i = 0;
     while (1) {
         int byteRead = read(client->sockfd, &response[i], 1);
@@ -184,28 +187,27 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_retrNative
         }
 
         if (response[i] == '\n' || i >= BUFFER_SIZE - 1) {
-            response[i] = '\0';  // Завершаем строку
+            response[i] = '\0';  // terminate string
             break;
         }
         i++;
     }
 
-    // Разбираем строку ответа, чтобы получить размер письма
+    // parse the email size from the response
     if (sscanf(response, "+OK %d octets", &emailSize) != 1) {
         LOGE("Failed to parse email size");
         LOGE(response);
         return (*env)->NewStringUTF(env, "Error parsing email size");
     }
 
-
-    // Выделяем буфер нужного размера для письма
+    // allocate buffer for email content
     char *emailContent = malloc(emailSize + 1);
     if (emailContent == NULL) {
         LOGE("Memory allocation failed for email content");
         return (*env)->NewStringUTF(env, "Memory allocation failed");
     }
 
-    // Считываем содержимое письма
+    // read email content
     int totalBytesRead = 0;
     while (totalBytesRead < emailSize) {
         int bytesRead = read(client->sockfd, emailContent + totalBytesRead, emailSize - totalBytesRead);
@@ -217,9 +219,10 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_retrNative
         totalBytesRead += bytesRead;
     }
 
-    // Завершаем строку нулевым байтом
+    // terminate the email content string
     emailContent[emailSize] = '\0';
 
+    // ignore the end of email marker "."
     char termination[2];
     while (read(client->sockfd, termination, 1) > 0) {
         if (termination[0] == '.') {
@@ -229,21 +232,17 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_retrNative
         }
     }
 
-    // Логируем содержимое письма
+    // log the email content
     LOGD("email content:");
     LOGD(emailContent);
 
-    // Создаем Java строку из считанного содержимого письма
+    // create Java string from email content
     jstring emailResult = (*env)->NewStringUTF(env, emailContent);
 
-    // Освобождаем память и возвращаем результат
+    // free memory and return result
     free(emailContent);
     return emailResult;
 }
-
-
-
-
 
 JNIEXPORT jlong JNICALL
 Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_authenticateNative(JNIEnv *env, jobject obj, jlong clientPtr, jstring username, jstring password) {
@@ -251,8 +250,8 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_authenticateNative(JNIEnv *env, 
     const char *c_username = (*env)->GetStringUTFChars(env, username, NULL);
     const char *c_password = (*env)->GetStringUTFChars(env, password, NULL);
 
-    LOGE(c_username); // Log username
-    LOGE(c_password); // Log password
+    LOGE(c_username); // log username
+    LOGE(c_password); // log password
 
     long result = pop3_authenticate(client, c_username, c_password);
 
@@ -278,7 +277,4 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_disconnectNative
     pop3_disconnect(client);
 }
 
-
-
 #endif //V_MAIL_POP3CLIENT_C
-
