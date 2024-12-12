@@ -50,21 +50,21 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        PeriodicWorkRequest workRequest = new
-                PeriodicWorkRequest.Builder(MailUpdateWorker.class,
-                15, TimeUnit.MINUTES)
-                .build();
-
-        WorkManager.getInstance(getApplicationContext())
-                .getWorkInfosForUniqueWorkLiveData("MailUpdate")
-                .observe(this, workInfos -> {
-                    for (WorkInfo workInfo : workInfos) {
-                        Log.d("WorkManager", "State: " + workInfo.getState());
-                    }
-                });
-
-
-        WorkManager.getInstance(getApplicationContext()).enqueue(workRequest);
+//        PeriodicWorkRequest workRequest = new
+//                PeriodicWorkRequest.Builder(MailUpdateWorker.class,
+//                15, TimeUnit.MINUTES)
+//                .build();
+//
+//        WorkManager.getInstance(getApplicationContext())
+//                .getWorkInfosForUniqueWorkLiveData("MailUpdate")
+//                .observe(this, workInfos -> {
+//                    for (WorkInfo workInfo : workInfos) {
+//                        Log.d("WorkManager", "State: " + workInfo.getState());
+//                    }
+//                });
+//
+//
+//        WorkManager.getInstance(getApplicationContext()).enqueue(workRequest);
 
     }
 }

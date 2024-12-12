@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <android/log.h>
+
 
 #define BUFFER_SIZE 1024
 #define MAX_EMAILS 100
@@ -27,6 +29,9 @@ Pop3Client *pop3_connect(const char *server, int port) {
         return NULL;
     }
 
+    char xx[255];
+    sprintf(xx, "%d", client->sockfd);
+    __android_log_write(ANDROID_LOG_ERROR, "socket fd", xx);
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     inet_pton(AF_INET, server, &server_addr.sin_addr);
@@ -39,6 +44,11 @@ Pop3Client *pop3_connect(const char *server, int port) {
 
     char response[BUFFER_SIZE];
     read(client->sockfd, response, BUFFER_SIZE);
+
+    char xxx[255];
+    sprintf(xxx, "%s", response);
+    __android_log_write(ANDROID_LOG_ERROR, "server response", xxx);
+
     printf("POP3 Server: %s", response);
 
     return client;
@@ -54,12 +64,20 @@ int pop3_send_command(Pop3Client *client, const char *command, char *response) {
         return -1;
     }
 
-    response[bytes_read] = '\0';  // Null-terminate response
-    printf("Server: %s", response);
+    response[bytes_read] = '\0';
+
+    char xxx[255];
+    sprintf(xxx, "%s", response);
+    __android_log_write(ANDROID_LOG_ERROR, "server response", xxx);
+
     return 0;
 }
 
 int pop3_authenticate(Pop3Client *client, const char *username, const char *password) {
+    char xx[255];
+    sprintf(xx, "%d", client->sockfd);
+    __android_log_write(ANDROID_LOG_ERROR, "socket fd in auth", xx);
+
     char response[BUFFER_SIZE];
 
     char user_command[BUFFER_SIZE];
@@ -82,7 +100,7 @@ int pop3_authenticate(Pop3Client *client, const char *username, const char *pass
 // Disconnect
 void pop3_disconnect(Pop3Client *client) {
     if (client) {
-        write(client->sockfd, "QUIT\r\n", 6);  // Send QUIT command
+        write(client->sockfd, "QUIT\r\n", 6);
         close(client->sockfd);
         free(client);
     }
@@ -126,6 +144,9 @@ Java_com_example_v_1mail_mail_jni_Pop3ClientJNI_authenticateNative(JNIEnv *env, 
     Pop3Client *client = (Pop3Client *)clientPtr;
     const char *c_username = (*env)->GetStringUTFChars(env, username, NULL);
     const char *c_password = (*env)->GetStringUTFChars(env, password, NULL);
+
+    __android_log_write(ANDROID_LOG_ERROR, "username", c_username);//Or ANDROID_LOG_INFO, ...
+    __android_log_write(ANDROID_LOG_ERROR, "password", c_password);//Or ANDROID_LOG_INFO, ...
 
     long result = pop3_authenticate(client, c_username, c_password);
 

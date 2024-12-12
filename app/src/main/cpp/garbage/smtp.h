@@ -3,24 +3,18 @@
 
 #include <stddef.h>
 
-// Структура клиента SMTP
 typedef struct SmtpClient {
-    int sock; // Сокет соединения
+    int sock;
 } SmtpClient;
 
-// Создание клиента SMTP
 SmtpClient* createSmtpClient(void);
 
-// Уничтожение клиента SMTP
 void destroySmtpClient(SmtpClient** client);
 
-// Подключение к серверу SMTP
 int connectToSmtpServer(SmtpClient* client);
 
-// Авторизация на сервере SMTP
 int authenticateSmtp(SmtpClient* client, const char* username, const char* password);
 
-// Отправка письма через SMTP
 int sendEmail(
         SmtpClient* client,
         const char* sender,
@@ -29,7 +23,6 @@ int sendEmail(
         const char* body
 );
 
-// Завершение соединения SMTP
 int closeSmtpConnection(SmtpClient* client);
 
 #endif // SMTP_H

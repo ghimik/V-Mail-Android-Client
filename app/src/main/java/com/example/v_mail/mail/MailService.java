@@ -35,11 +35,15 @@ public class MailService {
     }
 
     public List<Email> getInbox(String username, String password) throws IOException {
-        pop3Client.connect();
-        pop3Client.authenticate(username, password);
-        List<Email> emails = pop3Client.getInbox();
-        pop3Client.close();
-        return emails;
+        try {
+            pop3Client.connect();
+            pop3Client.authenticate(username, password);
+            List<Email> emails = pop3Client.getInbox();
+            return emails;
+        }
+        finally {
+            pop3Client.close();
+        }
     }
 
 }

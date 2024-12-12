@@ -15,7 +15,6 @@ public class Email {
         this.body = body;
     }
 
-    // Getters
     public String getFrom() { return from; }
     public String getTo() { return to; }
     public String getSubject() { return subject; }

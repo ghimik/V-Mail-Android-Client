@@ -109,13 +109,12 @@ char** listEmails(Pop3Client* client, int* emailCount) {
         return NULL;
     }
 
-    // Считаем количество писем
     *emailCount = 0;
-    char** emailList = malloc(sizeof(char*) * 100); // Предположим максимум 100 писем
+    char** emailList = malloc(sizeof(char*) * 100);
 
     while (1) {
         recv(client->sock, buf, sizeof(buf), 0);
-        if (strcmp(buf, ".\r\n") == 0) { // Конец списка
+        if (strcmp(buf, ".\r\n") == 0) {
             break;
         }
         emailList[*emailCount] = strdup(buf);

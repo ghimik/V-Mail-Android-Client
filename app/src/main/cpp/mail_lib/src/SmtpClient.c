@@ -41,17 +41,17 @@ SmtpClient* smtp_connect(const char* server, int port) {
 }
 
 int smtp_send_command(SmtpClient* client, const char* command) {
-    write(client->sockfd, command, strlen(command));   // Send command
-    write(client->sockfd, "\r\n", 2);                    // Newline after command
+    write(client->sockfd, command, strlen(command));
+    write(client->sockfd, "\r\n", 2);
 
     char response[BUFFER_SIZE];
-    int bytes_read = read(client->sockfd, response, BUFFER_SIZE); // Read response
+    int bytes_read = read(client->sockfd, response, BUFFER_SIZE);
     if (bytes_read < 0) {
         perror("Failed to read response");
         return -1;
     }
 
-    response[bytes_read] = '\0';  // Null-terminate response
+    response[bytes_read] = '\0';
     printf("Server: %s", response);
     return 0;
 }

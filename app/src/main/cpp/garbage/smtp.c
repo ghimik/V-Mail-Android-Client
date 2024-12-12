@@ -77,7 +77,7 @@ int authenticateSmtp(SmtpClient* client, const char* username, const char* passw
         printf("Received: %s\n", buf);
     }
 
-    return 0; // Authentication successful
+    return 0;
 }
 
 int sendEmail(SmtpClient* client, const char* sender, const char* receiver, const char* subject, const char* body) {

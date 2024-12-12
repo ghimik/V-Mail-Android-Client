@@ -4,25 +4,22 @@
 #include <stdint.h>
 #include "smtp.h"
 
-// JNI метод для инициализации SMTP клиента
 JNIEXPORT jlong JNICALL
 Java_com_example_v_1mail_mail_SmtpClient_nativeCreate(JNIEnv *env, jobject obj) {
     SmtpClient *client = createSmtpClient();
     if (!client) {
         fprintf(stderr, "Failed to create SmtpClient\n");
-        return 0; // Вернем NULL указатель в Java
+        return 0;
     }
     return (jlong)(uintptr_t)client;
 }
 
-// JNI метод для подключения к серверу SMTP
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_SmtpClient_nativeConnect(JNIEnv *env, jobject obj, jlong clientPtr) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
     return connectToSmtpServer(client);
 }
 
-// JNI метод для авторизации на сервере SMTP
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_SmtpClient_nativeAuthenticate(JNIEnv *env, jobject obj, jlong clientPtr, jstring username, jstring password) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
@@ -38,7 +35,6 @@ Java_com_example_v_1mail_mail_SmtpClient_nativeAuthenticate(JNIEnv *env, jobject
     return result;
 }
 
-// JNI метод для отправки письма через SMTP
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_SmtpClient_nativeSendEmail(JNIEnv *env, jobject obj, jlong clientPtr, jstring sender, jstring recipient, jstring subject, jstring body) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
@@ -58,14 +54,12 @@ Java_com_example_v_1mail_mail_SmtpClient_nativeSendEmail(JNIEnv *env, jobject ob
     return result;
 }
 
-// JNI метод для завершения соединения SMTP
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_SmtpClient_nativeClose(JNIEnv *env, jobject obj, jlong clientPtr) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;
     return closeSmtpConnection(client);
 }
 
-// JNI метод для уничтожения SMTP клиента
 JNIEXPORT void JNICALL
 Java_com_example_v_1mail_mail_SmtpClient_nativeDestroy(JNIEnv *env, jobject obj, jlong clientPtr) {
     SmtpClient *client = (SmtpClient *)(uintptr_t)clientPtr;

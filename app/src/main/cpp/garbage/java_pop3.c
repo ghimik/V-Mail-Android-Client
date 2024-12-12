@@ -4,18 +4,16 @@
 #include <stdint.h>
 #include "pop.h"
 
-// JNI метод для инициализации POP3 клиента
 JNIEXPORT jlong JNICALL
 Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeCreate(JNIEnv *env, jobject obj) {
     Pop3Client *client = createPop3Client();
     if (!client) {
         fprintf(stderr, "Failed to create Pop3Client\n");
-        return 0; // Вернем NULL указатель в Java
+        return 0;
     }
     return (jlong)(uintptr_t)client;
 }
 
-// JNI метод для подключения к серверу POP3
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeConnect(JNIEnv *env, jobject obj, jlong clientPtr, jstring server, jint port) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
@@ -27,7 +25,6 @@ Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeConnect(JNIEnv *env, jobj
     return result;
 }
 
-// JNI метод для авторизации на сервере POP3
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeAuthenticate(JNIEnv *env, jobject obj, jlong clientPtr, jstring username, jstring password) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
@@ -43,21 +40,18 @@ Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeAuthenticate(JNIEnv *env,
     return result;
 }
 
-// JNI метод для получения письма по индексу
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeRetrieveEmail(JNIEnv *env, jobject obj, jlong clientPtr, jint emailIndex) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
     return retrieveEmail(client, (int)emailIndex);
 }
 
-// JNI метод для завершения работы с сервером
 JNIEXPORT jint JNICALL
 Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeQuit(JNIEnv *env, jobject obj, jlong clientPtr) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
     return quitPop3Server(client);
 }
 
-// JNI метод для уничтожения POP3 клиента
 JNIEXPORT void JNICALL
 Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeDestroy(JNIEnv *env, jobject obj, jlong clientPtr) {
     Pop3Client *client = (Pop3Client *)(uintptr_t)clientPtr;
@@ -80,9 +74,9 @@ Java_com_example_v_1mail_mail_Pop3ClientPureJava_nativeListEmails(JNIEnv *env, j
     for (int i = 0; i < emailCount; i++) {
         jstring email = (*env)->NewStringUTF(env, emailList[i]);
         (*env)->SetObjectArrayElement(env, result, i, email);
-        free(emailList[i]); // Освобождаем память
+        free(emailList[i]);
     }
-    free(emailList); // Освобождаем массив указателей
+    free(emailList);
 
     return result;
 }
