@@ -28,10 +28,16 @@ public class MailService {
     }
 
     public void sendEmail(String from, String to, String subject, String body, String username, String password) throws IOException {
-        smtpClient.connect();
-        smtpClient.authenticate(encodeBase64(username), encodeBase64(password));
-        smtpClient.sendEmail(new Email(from, to, subject, body));
-        smtpClient.close();
+
+        try {
+            smtpClient.connect();
+            smtpClient.authenticate(encodeBase64(username), encodeBase64(password));
+            smtpClient.sendEmail(new Email(from, to, subject, body));
+            smtpClient.close();
+        }
+        finally {
+            smtpClient.close();
+        }
     }
 
     public List<Email> getInbox(String username, String password) throws IOException {
@@ -40,6 +46,10 @@ public class MailService {
             pop3Client.authenticate(username, password);
             List<Email> emails = pop3Client.getInbox();
             return emails;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
         }
         finally {
             pop3Client.close();
